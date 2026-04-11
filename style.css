@@ -361,7 +361,7 @@ header {
 }
 /* Section Titles */
 .section-title {
-  font-family: "Cinzel", serif;
+  font-family: "Pinyon Script", cursive;
   color: var(--gold);
   margin: 30px 0 20px;
   text-transform: uppercase;
