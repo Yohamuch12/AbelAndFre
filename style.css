@@ -327,7 +327,7 @@ header {
 /* Countdown */
 .countdown {
   padding: 25px 15px;
-  background-image: url(./image/date_magicstudio_yjt1cz2lid.png);
+  background-image: url(./image/count.png);
   background-position: center;
   background-size: 80%;
   
@@ -343,7 +343,7 @@ header {
 
 .timer-unit span:first-child {
   display: block;
-  font-size: 1.9rem;
+  font-size: 3.1rem;
   font-family: "Cinzel", serif;
   color: var(--gold);
   font-weight: bolder;
@@ -357,7 +357,7 @@ header {
 }
 .count-text {
     font-family: "Cinzel", serif;
-    color: wheat;
+    color: var(--gold);
 }
 /* Section Titles */
 .section-title {
