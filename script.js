@@ -48,3 +48,54 @@ function activateTab(clickedButton) {
   // Make clicked button active
   clickedButton.classList.add('active');
 }
+
+function initializeGuestQR() {
+  // 1. Get the URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const guestId = urlParams.get('id'); // Looks for "?id=G001" in the URL
+
+  // 2. If a guest ID exists in the link, show the QR code
+  if (guestId) {
+    const qrSection = document.getElementById('qr-section');
+    const qrImage = document.getElementById('qr-image');
+    const guestIdDisplay = document.getElementById('guest-id-display');
+
+    // Make the section visible
+    qrSection.style.display = 'block';
+
+   // Replace the old qrImage.src line in your script.js with this one:
+qrImage.src = `https://quickchart.io/qr?text=${guestId}&size=150`;
+    
+    // Display their ID below the QR for manual verification just in case
+    guestIdDisplay.innerText = `ID: ${guestId}`;
+  }
+}
+
+// Run the function when the page loads
+window.addEventListener('DOMContentLoaded', initializeGuestQR);
+
+
+function generateGuestQR() {
+  const params = new URLSearchParams(window.location.search);
+  const guestId = params.get('id');
+  const guestName = params.get('nm'); // We'll use 'nm' for the name
+
+  if (guestId) {
+    const qrSection = document.getElementById('qr-section');
+    const qrImage = document.getElementById('qr-image');
+    const guestIdDisplay = document.getElementById('guest-id-display');
+    const guestNameDisplay = document.getElementById('guest-name-display');
+
+    if (qrSection) {
+      qrSection.style.display = 'block';
+      qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${guestId}`;
+      guestIdDisplay.innerText = guestId;
+      
+      // If a name was provided in the link, show it
+      if (guestName) {
+        guestNameDisplay.innerText = decodeURIComponent(guestName);
+      }
+    }
+  }
+}
+window.addEventListener('load', generateGuestQR);
