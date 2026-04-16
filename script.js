@@ -64,7 +64,8 @@ function initializeGuestQR() {
     qrSection.style.display = 'block';
 
    // Replace the old qrImage.src line in your script.js with this one:
-qrImage.src = `https://quickchart.io/qr?text=${guestId}&size=150`;
+// Change this line in your script.js
+qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yohamuch12.github.io/abel-fre1/checkin.html?id=${guestId}`;
     
     // Display their ID below the QR for manual verification just in case
     guestIdDisplay.innerText = `ID: ${guestId}`;
