@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guest Check-in</title>
     <style>
-        body { background: #0a0a0a; color: white; font-family: sans-serif; text-align: center; padding: 50px 20px; }
-        .card { background: #161616; padding: 30px; border-radius: 20px; border: 1px solid #d4af37; max-width: 400px; margin: 0 auto; }
-        .welcome { color: #d4af37; font-size: 1.5rem; }
-        .error { color: #ff4d4d; }
+        body { background: #0a0a0a; color: white; font-family: sans-serif; text-align: center; padding: 40px 20px; }
+        .card { background: #161616; padding: 30px; border-radius: 20px; border: 1px solid #d4af37; max-width: 400px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .welcome { color: #d4af37; font-size: 1.8rem; }
+        .already { color: #ff4d4d; font-size: 1.8rem; }
+        .error { color: #ff4d4d; border: 1px solid #ff4d4d; padding: 10px; margin-top: 20px; font-size: 0.8rem; }
         .loader { border: 4px solid #333; border-top: 4px solid #d4af37; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
@@ -16,62 +17,71 @@
 <body>
     <div class="card" id="display">
         <div class="loader"></div>
-        <p>Verifying Guest...</p>
+        <p>Verifying Guest Status...</p>
     </div>
 
     <script>
-       // NEW DEBUG VERSION
-const SHEETY_API = 'https://api.sheety.co/916ecbf7a69ad28e779525330408df8b/guestData/guestData'; // Double check this!
-
-const urlParams = new URLSearchParams(window.location.search);
-const guestId = urlParams.get('id');
-
-async function verifyGuest() {
-    const display = document.getElementById('display');
-    try {
-        console.log("Attempting to fetch from:", SHEETY_API);
-        const response = await fetch(SHEETY_API);
+        // --- CONFIGURATION ---
+        // 1. Make sure this URL matches your Sheety Project exactly!
+        const SHEETY_API = 'https://api.sheety.co/guestId/wedding/guests'; 
         
-        if (!response.ok) {
-            throw new Error(`HTTP Error! Status: ${response.status}`);
-        }
+        const urlParams = new URLSearchParams(window.location.search);
+        const guestIdFromUrl = urlParams.get('id');
 
-        const data = await response.json();
-        console.log("Data received:", data);
+        async function checkIn() {
+            const display = document.getElementById('display');
+            
+            try {
+                // Fetch the list from Sheety
+                const response = await fetch(SHEETY_API);
+                if (!response.ok) throw new Error(`API Connection Failed (Status ${response.status})`);
+                
+                const data = await response.json();
+                
+                // IMPORTANT: Sheety uses the tab name. If your tab is "guests", use data.guests
+                const guestsList = data.guests; 
+                
+                // Find guest using camelCase name for "GUEST ID" -> guestId
+                const guest = guestsList.find(g => String(g.guestId) === String(guestIdFromUrl));
 
-        // NOTE: 'guests' must match your sheet tab name exactly
-        const guest = data.guests.find(g => g.guestId === guestId);
+                if (!guest) {
+                    display.innerHTML = `<h2 class="error">GUEST NOT FOUND</h2><p>ID: ${guestIdFromUrl}</p>`;
+                    return;
+                }
 
-        if (!guest) {
-            display.innerHTML = `<h2 style="color:red">INVALID ID</h2><p>ID ${guestId} not found in the list.</p>`;
-            return;
-        }
+                if (guest.status === "Checked In") {
+                    display.innerHTML = `<h2 class="already">❌ ALREADY USED</h2><p>${guest.name}</p><p style="color:#666">This code has already been scanned.</p>`;
+                } else {
+                    // Update the status using a PUT request
+                    // We need the internal Sheety 'id' (the row number)
+                    const updateUrl = `${SHEETY_API}/${guest.id}`;
+                    
+                    const updateResponse = await fetch(updateUrl, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ guest: { status: 'Checked In' } })
+                    });
 
-        if (guest.status === "Checked In") {
-            display.innerHTML = `<div class="already">❌ ALREADY USED</div><div class="guest-name">${guest.name}</div>`;
-        } else {
-            // Update the status in the sheet
-            const updateResponse = await fetch(`${SHEETY_API}/${guest.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ guest: { status: 'Checked In' } })
-            });
-
-            if (updateResponse.ok) {
-                display.innerHTML = `<div class="welcome">✅ WELCOME</div><div class="guest-name">${guest.name}</div>`;
-            } else {
-                throw new Error("Failed to update status in Google Sheet.");
+                    if (updateResponse.ok) {
+                        display.innerHTML = `<h2 class="welcome">✅ WELCOME</h2><h1>${guest.name}</h1><p>Entrance Granted</p>`;
+                    } else {
+                        throw new Error("Could not update status. Check if PUT is enabled in Sheety.");
+                    }
+                }
+            } catch (err) {
+                display.innerHTML = `
+                    <h2 class="error">SYSTEM ERROR</h2>
+                    <p style="font-size:0.7rem; color:#aaa;">${err.message}</p>
+                    <button onclick="location.reload()" style="background:#d4af37; border:none; padding:10px 20px; border-radius:5px; margin-top:10px;">Retry</button>
+                `;
             }
         }
-    } catch (err) {
-        console.error(err);
-        display.innerHTML = `<h2 style="color:red">SYSTEM ERROR</h2>
-                             <p style="font-size:0.8rem">${err.message}</p>
-                             <p>Please check your Sheety API settings.</p>`;
-    }
-}
 
-if (guestId) verifyGuest();
-else display.innerHTML = "<h1>No ID provided</h1>";    </script>
+        if (guestIdFromUrl) {
+            checkIn();
+        } else {
+            display.innerHTML = "<h2>No Guest ID detected.</h2>";
+        }
+    </script>
 </body>
 </html>
