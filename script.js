@@ -57,7 +57,6 @@ function setupGuestInvitation() {
   const guestId = params.get('id');
   const guestName = params.get('nm');
 
-  // Only proceed if we have a Guest ID
   if (guestId) {
     const qrSection = document.getElementById('qr-section');
     const qrImage = document.getElementById('qr-image');
@@ -65,21 +64,17 @@ function setupGuestInvitation() {
     const guestNameDisplay = document.getElementById('guest-name-display');
 
     if (qrSection) {
-      // 1. Show the hidden QR section
       qrSection.style.display = 'block';
 
-      // 2. Display the Guest Name (decoded for spaces/special chars)
       if (guestName && guestNameDisplay) {
         guestNameDisplay.innerText = decodeURIComponent(guestName);
       }
 
-      // 3. Display the Guest ID
       if (guestIdDisplay) {
         guestIdDisplay.innerText = `ID: ${guestId}`;
       }
 
-      // 4. Generate the QR Code pointing to your check-in page
-      // We use encodeURIComponent to make sure the nested URL doesn't break the API
+      // IMPORTANT: Ensure "AbelAndFre" matches your GitHub repository name exactly!
       const checkinUrl = `https://yohamuch12.github.io/AbelAndFre/checkin.html?id=${guestId}`;
       const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(checkinUrl)}`;
       
@@ -87,6 +82,4 @@ function setupGuestInvitation() {
     }
   }
 }
-
-// Run this once when the page is fully loaded
 window.addEventListener('load', setupGuestInvitation);
