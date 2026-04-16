@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guest Check-in</title>
+    <style>
+        body { background: #0a0a0a; color: white; font-family: sans-serif; text-align: center; padding: 50px 20px; }
+        .card { background: #161616; padding: 30px; border-radius: 20px; border: 1px solid #d4af37; max-width: 400px; margin: 0 auto; }
+        .welcome { color: #d4af37; font-size: 1.5rem; }
+        .error { color: #ff4d4d; }
+        .loader { border: 4px solid #333; border-top: 4px solid #d4af37; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="card" id="display">
+        <div class="loader"></div>
+        <p>Verifying Guest...</p>
+    </div>
+
+    <script>
+        const SHEETY_API = 'PASTE_YOUR_SHEETY_API_URL_HERE';
+        const urlParams = new URLSearchParams(window.location.search);
+        const guestId = urlParams.get('id');
+
+        async function doCheckIn() {
+            const display = document.getElementById('display');
+            
+            try {
+                // 1. Fetch the guest list
+                const response = await fetch(SHEETY_API);
+                const data = await response.json();
+                const guest = data.guests.find(g => g.guestId === guestId);
+
+                if (!guest) {
+                    display.innerHTML = `<h2 class="error">INVALID QR</h2><p>Guest not found in list.</p>`;
+                    return;
+                }
+
+                if (guest.status === "Checked In") {
+                    // 2. Respond if already used
+                    display.innerHTML = `<h2 class="error">ALREADY USED</h2><p>${guest.name} has already entered.</p>`;
+                } else {
+                    // 3. Mark as Checked In
+                    await fetch(`${SHEETY_API}/${guest.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ guest: { status: 'Checked In' } })
+                    });
+                    display.innerHTML = `<h2 class="welcome">WELCOME</h2><h1>${guest.name}</h1><p>Entrance Granted ✅</p>`;
+                }
+            } catch (err) {
+                display.innerHTML = `<p class="error">System Error. Check connection.</p>`;
+            }
+        }
+
+        if (guestId) { doCheckIn(); } else { document.getElementById('display').innerHTML = "No ID Provided."; }
+    </script>
+</body>
+</html>
