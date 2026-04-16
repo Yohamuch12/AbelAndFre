@@ -49,38 +49,15 @@ function activateTab(clickedButton) {
   clickedButton.classList.add('active');
 }
 
-function initializeGuestQR() {
-  // 1. Get the URL parameters
-  const urlParams = new URLSearchParams(window.location.search);
-  const guestId = urlParams.get('id'); // Looks for "?id=G001" in the URL
-
-  // 2. If a guest ID exists in the link, show the QR code
-  if (guestId) {
-    const qrSection = document.getElementById('qr-section');
-    const qrImage = document.getElementById('qr-image');
-    const guestIdDisplay = document.getElementById('guest-id-display');
-
-    // Make the section visible
-    qrSection.style.display = 'block';
-
-   // Replace the old qrImage.src line in your script.js with this one:
-// Change this line in your script.js
-qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yohamuch12.github.io/abel-fre1/checkin.html?id=${guestId}`;
-    
-    // Display their ID below the QR for manual verification just in case
-    guestIdDisplay.innerText = `ID: ${guestId}`;
-  }
-}
-
-// Run the function when the page loads
-window.addEventListener('DOMContentLoaded', initializeGuestQR);
-
-
-function generateGuestQR() {
+/**
+ * Single function to handle Guest Personalization and QR Generation
+ */
+function setupGuestInvitation() {
   const params = new URLSearchParams(window.location.search);
   const guestId = params.get('id');
-  const guestName = params.get('nm'); // We'll use 'nm' for the name
+  const guestName = params.get('nm');
 
+  // Only proceed if we have a Guest ID
   if (guestId) {
     const qrSection = document.getElementById('qr-section');
     const qrImage = document.getElementById('qr-image');
@@ -88,15 +65,28 @@ function generateGuestQR() {
     const guestNameDisplay = document.getElementById('guest-name-display');
 
     if (qrSection) {
+      // 1. Show the hidden QR section
       qrSection.style.display = 'block';
-      qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${guestId}`;
-      guestIdDisplay.innerText = guestId;
-      
-      // If a name was provided in the link, show it
-      if (guestName) {
+
+      // 2. Display the Guest Name (decoded for spaces/special chars)
+      if (guestName && guestNameDisplay) {
         guestNameDisplay.innerText = decodeURIComponent(guestName);
       }
+
+      // 3. Display the Guest ID
+      if (guestIdDisplay) {
+        guestIdDisplay.innerText = `ID: ${guestId}`;
+      }
+
+      // 4. Generate the QR Code pointing to your check-in page
+      // We use encodeURIComponent to make sure the nested URL doesn't break the API
+      const checkinUrl = `https://yohamuch12.github.io/AbelAndFre/checkin.html?id=${guestId}`;
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(checkinUrl)}`;
+      
+      qrImage.src = qrApiUrl;
     }
   }
 }
-window.addEventListener('load', generateGuestQR);
+
+// Run this once when the page is fully loaded
+window.addEventListener('load', setupGuestInvitation);
