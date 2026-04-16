@@ -56,21 +56,32 @@
 
                 if (guest.status === "Checked In") {
                     display.innerHTML = `<h2 class="already">❌ ALREADY USED</h2><h1>${guest.name}</h1><p>Scanned previously.</p>`;
-                } else {
-                    // Update the status using PUT
-                    const updateResponse = await fetch(`${SHEETY_API}/${guest.id}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ guest: { status: 'Checked In' } })
-                    });
+               } else {
+    // Attempting to update the status
+    const updateUrl = `${SHEETY_API}/${guest.id}`;
+    
+    console.log("Attempting PUT to:", updateUrl);
 
-                    if (updateResponse.ok) {
-                        display.innerHTML = `<h2 class="welcome">✅ WELCOME</h2><h1>${guest.name}</h1><p>Entrance Granted</p>`;
-                    } else {
-                        throw new Error("Could not update status. Check if PUT is enabled in Sheety.");
-                    }
-                }
-            } catch (err) {
+    const updateResponse = await fetch(updateUrl, {
+        method: 'PUT',
+        headers: { 
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+            guest: { 
+                status: 'Checked In' 
+            } 
+        })
+    });
+
+    if (updateResponse.ok) {
+        display.innerHTML = `<h2 class="welcome">✅ WELCOME</h2><h1>${guest.name}</h1>`;
+    } else {
+        const errorData = await updateResponse.text();
+        console.error("Sheety Error Details:", errorData);
+        throw new Error(`Permission Denied: Ensure "PUT" is enabled in Sheety settings. (Status: ${updateResponse.status})`);
+    }
+}            } catch (err) {
                 display.innerHTML = `<h2 class="error">SYSTEM ERROR</h2><p>${err.message}</p>`;
             }
         }
