@@ -20,42 +20,58 @@
     </div>
 
     <script>
-        const SHEETY_API = 'https://api.sheety.co/916ecbf7a69ad28e779525330408df8b/guestData/guestData';
-        const urlParams = new URLSearchParams(window.location.search);
-        const guestId = urlParams.get('id');
+       // NEW DEBUG VERSION
+const SHEETY_API = 'https://api.sheety.co/916ecbf7a69ad28e779525330408df8b/guestData/guestData'; // Double check this!
 
-        async function doCheckIn() {
-            const display = document.getElementById('display');
-            
-            try {
-                // 1. Fetch the guest list
-                const response = await fetch(SHEETY_API);
-                const data = await response.json();
-                const guest = data.guests.find(g => g.guestId === guestId);
+const urlParams = new URLSearchParams(window.location.search);
+const guestId = urlParams.get('id');
 
-                if (!guest) {
-                    display.innerHTML = `<h2 class="error">INVALID QR</h2><p>Guest not found in list.</p>`;
-                    return;
-                }
-
-                if (guest.status === "Checked In") {
-                    // 2. Respond if already used
-                    display.innerHTML = `<h2 class="error">ALREADY USED</h2><p>${guest.name} has already entered.</p>`;
-                } else {
-                    // 3. Mark as Checked In
-                    await fetch(`${SHEETY_API}/${guest.id}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ guest: { status: 'Checked In' } })
-                    });
-                    display.innerHTML = `<h2 class="welcome">WELCOME</h2><h1>${guest.name}</h1><p>Entrance Granted ✅</p>`;
-                }
-            } catch (err) {
-                display.innerHTML = `<p class="error">System Error. Check connection.</p>`;
-            }
+async function verifyGuest() {
+    const display = document.getElementById('display');
+    try {
+        console.log("Attempting to fetch from:", SHEETY_API);
+        const response = await fetch(SHEETY_API);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP Error! Status: ${response.status}`);
         }
 
-        if (guestId) { doCheckIn(); } else { document.getElementById('display').innerHTML = "No ID Provided."; }
-    </script>
+        const data = await response.json();
+        console.log("Data received:", data);
+
+        // NOTE: 'guests' must match your sheet tab name exactly
+        const guest = data.guests.find(g => g.guestId === guestId);
+
+        if (!guest) {
+            display.innerHTML = `<h2 style="color:red">INVALID ID</h2><p>ID ${guestId} not found in the list.</p>`;
+            return;
+        }
+
+        if (guest.status === "Checked In") {
+            display.innerHTML = `<div class="already">❌ ALREADY USED</div><div class="guest-name">${guest.name}</div>`;
+        } else {
+            // Update the status in the sheet
+            const updateResponse = await fetch(`${SHEETY_API}/${guest.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ guest: { status: 'Checked In' } })
+            });
+
+            if (updateResponse.ok) {
+                display.innerHTML = `<div class="welcome">✅ WELCOME</div><div class="guest-name">${guest.name}</div>`;
+            } else {
+                throw new Error("Failed to update status in Google Sheet.");
+            }
+        }
+    } catch (err) {
+        console.error(err);
+        display.innerHTML = `<h2 style="color:red">SYSTEM ERROR</h2>
+                             <p style="font-size:0.8rem">${err.message}</p>
+                             <p>Please check your Sheety API settings.</p>`;
+    }
+}
+
+if (guestId) verifyGuest();
+else display.innerHTML = "<h1>No ID provided</h1>";    </script>
 </body>
 </html>
