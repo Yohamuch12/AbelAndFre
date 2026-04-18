@@ -3,84 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guest Check-in</title>
+    <title>Entrance Validation</title>
     <style>
-        body { background: #0a0a0a; color: white; font-family: sans-serif; text-align: center; padding: 40px 20px; }
-        .card { background: #161616; padding: 30px; border-radius: 20px; border: 1px solid #d4af37; max-width: 400px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .welcome { color: #d4af37; font-size: 1.8rem; }
-        .already { color: #ff4d4d; font-size: 1.8rem; }
-        .error { color: #ff4d4d; border: 1px solid #ff4d4d; padding: 10px; margin-top: 20px; font-size: 0.8rem; }
-        .loader { border: 4px solid #333; border-top: 4px solid #d4af37; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        body { background: #0a0a0a; color: white; font-family: sans-serif; text-align: center; padding: 50px 20px; }
+        .card { background: #161616; padding: 40px; border-radius: 20px; border: 1px solid #d4af37; max-width: 400px; margin: 0 auto; }
+        .welcome { color: #d4af37; font-size: 2.2rem; margin-bottom: 10px; }
+        .error { color: #ff4d4d; font-size: 1.2rem; }
+        .id-badge { background: #333; padding: 5px 15px; border-radius: 5px; font-size: 0.8rem; color: #aaa; }
     </style>
 </head>
 <body>
     <div class="card" id="display">
-        <div class="loader"></div>
-        <p>Verifying Guest...</p>
+        <p>Processing QR Code...</p>
     </div>
 
     <script>
-        const SHEETY_API = 'https://api.sheety.co/916ecbf7a69ad28e779525330408df8b/guests/guestData'; 
+        // ADD YOUR GUESTS HERE
+        // Format: "GUEST_ID": "GUEST_NAME"
+        const guestData = {
+            "G001": "Dr. Meron",
+            "G002": "Abel Bekele",
+            "G003": "Frehiwot Tadesse",
+            // Keep adding all 93 guests here...
+            "G093": "Last Guest Name"
+        };
+
         const urlParams = new URLSearchParams(window.location.search);
-        const guestIdFromUrl = urlParams.get('id');
+        const guestId = urlParams.get('id');
 
-        async function doCheckIn() {
+        function validate() {
             const display = document.getElementById('display');
-            try {
-                // 1. Fetch Guest List
-                const response = await fetch(SHEETY_API);
-                if (!response.ok) throw new Error("Connection to Sheet Failed.");
-                
-                const data = await response.json();
-                const listKey = Object.keys(data)[0]; // Finds 'guestData' automatically
-                const guestsList = data[listKey];
+            
+            if (!guestId) {
+                display.innerHTML = "<h2 class='error'>No ID Detected</h2><p>Please scan a valid QR code.</p>";
+                return;
+            }
 
-                // 2. Find Guest
-                const guest = guestsList.find(g => {
-                    const idInSheet = g.guestId || g.guestid || g['guest id'];
-                    return String(idInSheet).trim() === String(guestIdFromUrl).trim();
-                });
+            const name = guestData[guestId.trim()];
 
-                if (!guest) {
-                    display.innerHTML = `<h2 class="error">INVALID ID</h2><p>ID: ${guestIdFromUrl}</p>`;
-                    return;
-                }
-
-                // 3. Check Status
-                if (guest.status === "Checked In") {
-                    display.innerHTML = `<h2 class="already">❌ ALREADY IN</h2><h1>${guest.name}</h1>`;
-                } else {
-                    // 4. Perform Update (PUT)
-                    const updateUrl = `${SHEETY_API}/${guest.id}`;
-                    
-                    // Smart Payload wrapping
-                    const payload = {};
-                    payload[listKey.slice(0, -1) || listKey] = { status: 'Checked In' };
-                    // If the above fails, Sheety often expects the exact tab name:
-                    const forcePayload = { guestData: { status: 'Checked In' } };
-
-                    const updateResponse = await fetch(updateUrl, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(forcePayload)
-                    });
-
-                    if (updateResponse.ok) {
-                        display.innerHTML = `<h2 class="welcome">✅ WELCOME</h2><h1>${guest.name}</h1><p>Entrance Granted</p>`;
-                    } else {
-                        const errDetails = await updateResponse.text();
-                        console.error(errDetails);
-                        throw new Error("Update blocked. Ensure 'PUT' is enabled in Sheety and 'Status' column exists.");
-                    }
-                }
-            } catch (err) {
-                display.innerHTML = `<h2 class="error">SYSTEM ERROR</h2><p>${err.message}</p>`;
+            if (name) {
+                display.innerHTML = `
+                    <p class="id-badge">VERIFIED GUEST</p>
+                    <h2 class="welcome">WELCOME</h2>
+                    <h1>${name}</h1>
+                    <p style="color: #888;">Entrance Granted for Abel & Fre's Wedding</p>
+                `;
+            } else {
+                display.innerHTML = `
+                    <h2 class="error">INVALID TICKET</h2>
+                    <p>ID: ${guestId} was not found on the guest list.</p>
+                `;
             }
         }
 
-        if (guestIdFromUrl) doCheckIn();
-        else display.innerHTML = "<h1>No ID provided.</h1>";
+        // Run immediately
+        validate();
     </script>
 </body>
 </html>
