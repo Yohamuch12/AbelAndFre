@@ -6,10 +6,12 @@
     <title>Entrance Validation</title>
     <style>
         body { background: #0a0a0a; color: white; font-family: sans-serif; text-align: center; padding: 50px 20px; }
-        .card { background: #161616; padding: 40px; border-radius: 20px; border: 1px solid #d4af37; max-width: 400px; margin: 0 auto; }
+        .card { background: #161616; padding: 40px; border-radius: 20px; border: 1px solid #d4af37; max-width: 400px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .welcome { color: #d4af37; font-size: 2.2rem; margin-bottom: 10px; }
+        .already { color: #ff4d4d; font-size: 1.8rem; margin-bottom: 10px; }
         .error { color: #ff4d4d; font-size: 1.2rem; }
-        .id-badge { background: #333; padding: 5px 15px; border-radius: 5px; font-size: 0.8rem; color: #aaa; }
+        .id-badge { background: #333; padding: 5px 15px; border-radius: 5px; font-size: 0.8rem; color: #aaa; margin-bottom: 15px; display: inline-block; }
+        button { background: #d4af37; color: black; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -18,14 +20,13 @@
     </div>
 
     <script>
-        // ADD YOUR GUESTS HERE
-        // Format: "GUEST_ID": "GUEST_NAME"
+        // 1. YOUR GUEST LIST (Add all 93 here)
         const guestData = {
             "G001": "Dr. Meron",
             "G002": "Abel Bekele",
             "G003": "Frehiwot Tadesse",
-            // Keep adding all 93 guests here...
-            "G093": "Last Guest Name"
+            "G004": "Johannes"
+            // Add the rest...
         };
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -39,24 +40,39 @@
                 return;
             }
 
-            const name = guestData[guestId.trim()];
+            const cleanId = guestId.trim();
+            const name = guestData[cleanId];
 
             if (name) {
-                display.innerHTML = `
-                    <p class="id-badge">VERIFIED GUEST</p>
-                    <h2 class="welcome">WELCOME</h2>
-                    <h1>${name}</h1>
-                    <p style="color: #888;">Entrance Granted for Abel & Fre's Wedding</p>
-                `;
+                // 2. CHECK LOCAL STORAGE
+                // This checks if this phone has already seen this ID
+                if (localStorage.getItem('scanned_' + cleanId)) {
+                    display.innerHTML = `
+                        <p class="id-badge">DUPLICATE ENTRY</p>
+                        <h2 class="already">❌ ALREADY SCANNED</h2>
+                        <h1>${name}</h1>
+                        <p style="color: #888;">This guest was already checked in on this device.</p>
+                        <button onclick="localStorage.removeItem('scanned_${cleanId}'); location.reload();">Reset this ID</button>
+                    `;
+                } else {
+                    // 3. MARK AS SCANNED
+                    localStorage.setItem('scanned_' + cleanId, 'true');
+                    
+                    display.innerHTML = `
+                        <p class="id-badge">VERIFIED GUEST</p>
+                        <h2 class="welcome">✅ WELCOME</h2>
+                        <h1>${name}</h1>
+                        <p style="color: #888;">Entrance Granted for Abel & Fre's Wedding</p>
+                    `;
+                }
             } else {
                 display.innerHTML = `
                     <h2 class="error">INVALID TICKET</h2>
-                    <p>ID: ${guestId} was not found on the guest list.</p>
+                    <p>ID: ${cleanId} not found.</p>
                 `;
             }
         }
 
-        // Run immediately
         validate();
     </script>
 </body>
