@@ -17,76 +17,70 @@
 <body>
     <div class="card" id="display">
         <div class="loader"></div>
-        <p>Verifying Guest Status...</p>
+        <p>Verifying Guest...</p>
     </div>
 
     <script>
-    // This URL must match your Sheety Dashboard exactly
-const SHEETY_API = 'https://api.sheety.co/916ecbf7a69ad28e779525330408df8b/guests/guestData'; 
+        const SHEETY_API = 'https://api.sheety.co/916ecbf7a69ad28e779525330408df8b/guests/guestData'; 
+        const urlParams = new URLSearchParams(window.location.search);
+        const guestIdFromUrl = urlParams.get('id');
 
-const urlParams = new URLSearchParams(window.location.search);
-const guestIdFromUrl = urlParams.get('id');
+        async function doCheckIn() {
+            const display = document.getElementById('display');
+            try {
+                // 1. Fetch Guest List
+                const response = await fetch(SHEETY_API);
+                if (!response.ok) throw new Error("Connection to Sheet Failed.");
+                
+                const data = await response.json();
+                const listKey = Object.keys(data)[0]; // Finds 'guestData' automatically
+                const guestsList = data[listKey];
 
-async function checkIn() {
-    const display = document.getElementById('display');
-    try {
-        const response = await fetch(SHEETY_API);
-        if (!response.ok) throw new Error(`Connection Failed (Status ${response.status})`);
-        
-        const data = await response.json();
-        
-        // This finds your list regardless of if it's called 'guestData' or 'guests'
-        const listKey = Object.keys(data)[0];
-        const guestsList = data[listKey];
+                // 2. Find Guest
+                const guest = guestsList.find(g => {
+                    const idInSheet = g.guestId || g.guestid || g['guest id'];
+                    return String(idInSheet).trim() === String(guestIdFromUrl).trim();
+                });
 
-        if (!guestsList || !Array.isArray(guestsList)) {
-            throw new Error("Guest list data not found in API response.");
-        }
+                if (!guest) {
+                    display.innerHTML = `<h2 class="error">INVALID ID</h2><p>ID: ${guestIdFromUrl}</p>`;
+                    return;
+                }
 
-        // Search for guest
-        const guest = guestsList.find(g => {
-            const idInSheet = g.guestId || g.guestid || g['guest id'];
-            return String(idInSheet).trim() === String(guestIdFromUrl).trim();
-        });
+                // 3. Check Status
+                if (guest.status === "Checked In") {
+                    display.innerHTML = `<h2 class="already">❌ ALREADY IN</h2><h1>${guest.name}</h1>`;
+                } else {
+                    // 4. Perform Update (PUT)
+                    const updateUrl = `${SHEETY_API}/${guest.id}`;
+                    
+                    // Smart Payload wrapping
+                    const payload = {};
+                    payload[listKey.slice(0, -1) || listKey] = { status: 'Checked In' };
+                    // If the above fails, Sheety often expects the exact tab name:
+                    const forcePayload = { guestData: { status: 'Checked In' } };
 
-        if (!guest) {
-            display.innerHTML = `<h2 class="error">GUEST NOT FOUND</h2><p>ID: ${guestIdFromUrl}</p>`;
-            return;
-        }
+                    const updateResponse = await fetch(updateUrl, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(forcePayload)
+                    });
 
-        if (guest.status === "Checked In") {
-            display.innerHTML = `<h2 class="already">❌ ALREADY USED</h2><h1>${guest.name}</h1>`;
-        } else {
-            const updateUrl = `${SHEETY_API}/${guest.id}`;
-            
-            // CRITICAL: The wrapper 'guestData' must match your endpoint's singular name
-            const bodyContent = {};
-            bodyContent[Object.keys(data)[0].slice(0, -1) || 'guest'] = { status: 'Checked In' };
-            // If the above is confusing, Sheety usually wants: { "guestData": { "status": "Checked In" } }
-
-            const updateResponse = await fetch(updateUrl, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    // This dynamically handles the singular name requirement
-                    guestData: { status: 'Checked In' } 
-                })
-            });
-
-            if (updateResponse.ok) {
-                display.innerHTML = `<h2 class="welcome">✅ WELCOME</h2><h1>${guest.name || 'Guest'}</h1>`;
-            } else {
-                const errText = await updateResponse.text();
-                console.error("Sheety error:", errText);
-                throw new Error("Update blocked. Check if PUT is enabled in Sheety.");
+                    if (updateResponse.ok) {
+                        display.innerHTML = `<h2 class="welcome">✅ WELCOME</h2><h1>${guest.name}</h1><p>Entrance Granted</p>`;
+                    } else {
+                        const errDetails = await updateResponse.text();
+                        console.error(errDetails);
+                        throw new Error("Update blocked. Ensure 'PUT' is enabled in Sheety and 'Status' column exists.");
+                    }
+                }
+            } catch (err) {
+                display.innerHTML = `<h2 class="error">SYSTEM ERROR</h2><p>${err.message}</p>`;
             }
         }
-    } catch (err) {
-        display.innerHTML = `<h2 class="error">SYSTEM ERROR</h2><p>${err.message}</p>`;
-    }
-}
 
-if (guestIdFromUrl) checkIn();   
+        if (guestIdFromUrl) doCheckIn();
+        else display.innerHTML = "<h1>No ID provided.</h1>";
     </script>
 </body>
 </html>
