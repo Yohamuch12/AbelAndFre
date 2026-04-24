@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Entrance Validation</title>
     <style>
-        body { background: #0a0a0a; color: white; font-family: sans-serif; text-align: center; padding: 50px 20px; }
+        body { background: #0a0a0a; color: white; font-family: 'Segoe UI', sans-serif; text-align: center; padding: 50px 20px; }
         .card { background: #161616; padding: 40px; border-radius: 20px; border: 1px solid #d4af37; max-width: 400px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .welcome { color: #d4af37; font-size: 2.2rem; margin-bottom: 10px; }
         .already { color: #ff4d4d; font-size: 1.8rem; margin-bottom: 10px; }
@@ -20,7 +20,7 @@
     </div>
 
     <script>
-        // 1. YOUR GUEST LIST (Add all 93 here)
+        // THE OFFICIAL GUEST LIST
         const guestData = {
             "G001": "Dr. Meron",
             "G002": "Abel Bekele",
@@ -34,7 +34,87 @@
             "G010": "DR ZEYIDAT MOHAMMED",
             "G011": "DR HANA GENENE",
             "G012": "DR SAMUEL ALEMU",
-            // Add the rest...
+            "G013": "DR BETELHEM BIRHANU",
+            "G014": "DR TSION GETACHEW",
+            "G015": "DR MAHDER BELAYNEH",
+            "G016": "DR BEZA MARU",
+            "G017": "DR REEM IBRAHIM",
+            "G018": "DR RUTH MULUGETA",
+            "G019": "DR REBKA TADESSE",
+            "G020": "DR MERON NEGASH",
+            "G021": "DR BETELHEM ABREHAM",
+            "G022": "DR BEMNET MULU",
+            "G023": "DR MARIAMAWIT NIGUSSIE",
+            "G024": "DR KALKIDAN NIGUSSE",
+            "G025": "DR MAEDER MOGES",
+            "G026": "DR MELAT SOLOMON",
+            "G027": "DR FASIKA WORKU",
+            "G028": "DR HERMELA ALEMU",
+            "G029": "DR EDEN ADANE",
+            "G030": "DR ELIZABETH TAYE",
+            "G031": "DR REDIET TSEGAYE",
+            "G032": "DR LIDYA SISAY",
+            "G033": "DR RAHEL DESTA",
+            "G034": "DR SOSINA MERSHA",
+            "G035": "DR MARIAMAWIT MESFIN",
+            "G036": "DR BITANIA TESHOME",
+            "G037": "DR NAHOM KASSAHUN",
+            "G038": "DR TEWODROS TESFAYE",
+            "G039": "DR YONAS GIZAW",
+            "G040": "DR AMANUEL GIRMA",
+            "G041": "DR SAMSON TADESSE",
+            "G042": "DR NATNAEL BERHANU",
+            "G043": "DR HENOK ZELEKE",
+            "G044": "DR MIKYAS TESFAYE",
+            "G045": "DR SURAFEL MULUGETA",
+            "G046": "DR DAGMAWI ABEBE",
+            "G047": "DR EYERUSALEM KASSA",
+            "G048": "DR BETELHEM TADESSE",
+            "G049": "DR MAHDER GEBRE",
+            "G050": "DR BEZA MARU",
+            "G051": "DR REEM IBRAHIM",
+            "G052": "DR RUTH MULUGETA",
+            "G053": "DR REBKA TADESSE",
+            "G054": "DR MERON NEGASH",
+            "G055": "DR BETELHEM ABREHAM",
+            "G056": "DR BEMNET MULU",
+            "G057": "DR MARIAMAWIT NIGUSSIE",
+            "G058": "DR KALKIDAN NIGUSSE",
+            "G059": "DR MAEDER MOGES",
+            "G060": "DR MELAT SOLOMON",
+            "G061": "DR FASIKA WORKU",
+            "G062": "DR HERMELA ALEMU",
+            "G063": "DR EDEN ADANE",
+            "G064": "DR ELIZABETH TAYE",
+            "G065": "DR REDIET TSEGAYE",
+            "G066": "DR LIDYA SISAY",
+            "G067": "DR RAHEL DESTA",
+            "G068": "DR SOSINA MERSHA",
+            "G069": "DR MARIAMAWIT MESFIN",
+            "G070": "DR BITANIA TESHOME",
+            "G071": "DR NAHOM KASSAHUN",
+            "G072": "DR TEWODROS TESFAYE",
+            "G073": "DR YONAS GIZAW",
+            "G074": "DR AMANUEL GIRMA",
+            "G075": "DR SAMSON TADESSE",
+            "G076": "DR NATNAEL BERHANU",
+            "G077": "DR HENOK ZELEKE",
+            "G078": "DR MIKYAS TESFAYE",
+            "G079": "DR SURAFEL MULUGETA",
+            "G080": "DR DAGMAWI ABEBE",
+            "G081": "DR EZRA TESHOME",
+            "G082": "DR YIDNEKACHEW GIRMA",
+            "G083": "DR BEREKET ABEBE",
+            "G084": "DR ABEL KASSAHUN",
+            "G085": "DR SAMSON MEKONNEN",
+            "G086": "DR NATNAEL TADESSE",
+            "G087": "DR HENOK BERHANU",
+            "G088": "DR MIKYAS ZELEKE",
+            "G089": "DR SURAFEL TESFAYE",
+            "G090": "DR DAGMAWI MULUGETA",
+            "G091": "DR BROOK ABEBE",
+            "G092": "DR KIRUBEL KASSA",
+            "G093": "DR YEABSIRA TADESSE"
         };
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -52,20 +132,16 @@
             const name = guestData[cleanId];
 
             if (name) {
-                // 2. CHECK LOCAL STORAGE
-                // This checks if this phone has already seen this ID
                 if (localStorage.getItem('scanned_' + cleanId)) {
                     display.innerHTML = `
                         <p class="id-badge">DUPLICATE ENTRY</p>
                         <h2 class="already">❌ ALREADY SCANNED</h2>
                         <h1>${name}</h1>
-                        <p style="color: #888;">This guest was already checked in on this device.</p>
-                        <button onclick="localStorage.removeItem('scanned_${cleanId}'); location.reload();">Reset this ID</button>
+                        <p style="color: #888;">This guest has already entered.</p>
+                        <button onclick="if(confirm('Reset this guest?')){localStorage.removeItem('scanned_${cleanId}'); location.reload();}">Allow Re-entry</button>
                     `;
                 } else {
-                    // 3. MARK AS SCANNED
                     localStorage.setItem('scanned_' + cleanId, 'true');
-                    
                     display.innerHTML = `
                         <p class="id-badge">VERIFIED GUEST</p>
                         <h2 class="welcome">✅ WELCOME</h2>
@@ -76,7 +152,7 @@
             } else {
                 display.innerHTML = `
                     <h2 class="error">INVALID TICKET</h2>
-                    <p>ID: ${cleanId} not found.</p>
+                    <p>ID: ${cleanId} not found on the official list.</p>
                 `;
             }
         }
